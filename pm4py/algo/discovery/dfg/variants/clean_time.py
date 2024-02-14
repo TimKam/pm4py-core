@@ -15,14 +15,9 @@
     along with PM4Py.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
-import time
 from enum import Enum
-from typing import List, Optional, Dict, Any
 
 import pandas as pd
-import numpy as np
-from pandas._libs.tslibs.timestamps import Timestamp
-from pandas.core.frame import DataFrame
 from pandas.core.tools.datetimes import to_datetime
 
 from pm4py.objects.dfg.obj import DFG
@@ -74,7 +69,7 @@ def apply(log: pd.DataFrame, parameters=None):
         for act in all_act:
             df1 = current_group[current_group[act_key] == act]
             mean_time = df1[time_key].mean()
-            average_time = mean_time - init_timestamp
+            average_time = mean_time - init_timestamp if mean_time - init_timestamp >= pd.Timedelta(0, "s") else pd.Timedelta(0, "s")
 
             if act not in time_dictionary_list.keys():
                 time_dictionary_list[act] = []
