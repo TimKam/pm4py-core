@@ -43,6 +43,8 @@ def apply(log: pd.DataFrame, parameters=None):
     if parameters is None:
         parameters = {}
 
+    aggregation = parameters['aggregation'] if 'aggregation' in parameters.keys() else 'avg'
+
     act_key = exec_utils.get_param_value(
         Parameters.ACTIVITY_KEY, parameters, xes_util.DEFAULT_NAME_KEY)
     cid_key = exec_utils.get_param_value(
@@ -68,8 +70,16 @@ def apply(log: pd.DataFrame, parameters=None):
         '''deal with loops in a case'''
         for act in all_act:
             df1 = current_group[current_group[act_key] == act]
-            mean_time = df1[time_key].mean()
-            average_time = mean_time - init_timestamp if mean_time - init_timestamp >= pd.Timedelta(0, "s") else pd.Timedelta(0, "s")
+            match aggregation:
+                case 'avg':
+                    agg_time = df1[time_key].mean()
+                case 'median':
+                    agg_time = df1[time_key].median()
+                case 'max':
+                    agg_time = df1[time_key].max()
+                case 'min':
+                    agg_time = df1[time_key].min()
+            average_time = agg_time - init_timestamp if agg_time - init_timestamp >= pd.Timedelta(0, 's') else pd.Timedelta(0, 's')
 
             if act not in time_dictionary_list.keys():
                 time_dictionary_list[act] = []
@@ -81,8 +91,17 @@ def apply(log: pd.DataFrame, parameters=None):
     keys = time_dictionary_list.keys()
     time_dictionary = {}
     for key in keys:
-        avg=pd.to_timedelta(pd.Series(time_dictionary_list[key])).mean()
-        time_dictionary[key] = avg 
+        match aggregation:
+            case 'avg':
+                agg = pd.to_timedelta(pd.Series(time_dictionary_list[key])).mean()
+            case 'median':
+                agg = pd.to_timedelta(pd.Series(time_dictionary_list[key])).median()
+            case 'max':
+                agg = pd.to_timedelta(pd.Series(time_dictionary_list[key])).max()
+            case 'min':
+                agg = pd.to_timedelta(pd.Series(time_dictionary_list[key])).min()
+        
+        time_dictionary[key] = agg 
 
     return time_dictionary
 
