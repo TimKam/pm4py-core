@@ -173,7 +173,7 @@ def graphviz_visualization(activities_count, dfg, dfg_time : Dict, image_format=
             time_act_dict[value] = [ key ]
 
 
-    ''' calculate how long each edge should be to make the edges proportional alomg the timeilne axis..'''
+    ''' calculate how long each edge should be to make the edges proportional along the timeilne axis.'''
     minlen_list = []
 
     minlen_aux =[]

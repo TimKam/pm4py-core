@@ -44,6 +44,7 @@ def apply(log: pd.DataFrame, parameters=None):
         parameters = {}
 
     aggregation = parameters['aggregation'] if 'aggregation' in parameters.keys() else 'avg'
+    loop_handling = parameters['loop_handling'] if 'loop_handling' in parameters.keys() else 'avg'
 
     act_key = exec_utils.get_param_value(
         Parameters.ACTIVITY_KEY, parameters, xes_util.DEFAULT_NAME_KEY)
@@ -70,7 +71,7 @@ def apply(log: pd.DataFrame, parameters=None):
         '''deal with loops in a case'''
         for act in all_act:
             df1 = current_group[current_group[act_key] == act]
-            match aggregation:
+            match loop_handling:
                 case 'avg':
                     agg_time = df1[time_key].mean()
                 case 'median':
