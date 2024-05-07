@@ -1,6 +1,7 @@
 colorama
 contourpy
 cycler
+dafsa
 deprecation
 fonttools
 graphviz
