@@ -45,6 +45,7 @@ def apply(log: pd.DataFrame, parameters=None):
 
     aggregation = parameters['aggregation'] if 'aggregation' in parameters.keys() else 'avg'
     loop_handling = parameters['loop_handling'] if 'loop_handling' in parameters.keys() else 'avg'
+    round_to = parameters['round_to'] if 'round_to' in parameters.keys() else 's'
 
     act_key = exec_utils.get_param_value(
         Parameters.ACTIVITY_KEY, parameters, xes_util.DEFAULT_NAME_KEY)
@@ -80,13 +81,12 @@ def apply(log: pd.DataFrame, parameters=None):
                     agg_time = df1[time_key].max()
                 case 'min':
                     agg_time = df1[time_key].min()
-            average_time = agg_time - init_timestamp if agg_time - init_timestamp >= pd.Timedelta(0, 's') else pd.Timedelta(0, 's')
-
+            rel_time = agg_time - init_timestamp if agg_time - init_timestamp >= pd.Timedelta(0, 's') else pd.Timedelta(0, 's')
             if act not in time_dictionary_list.keys():
                 time_dictionary_list[act] = []
-                time_dictionary_list[act].append(average_time)
+                time_dictionary_list[act].append(rel_time)
             else:
-                time_dictionary_list[act].append(average_time)
+                time_dictionary_list[act].append(rel_time)
             
 
     keys = time_dictionary_list.keys()
@@ -102,7 +102,7 @@ def apply(log: pd.DataFrame, parameters=None):
             case 'min':
                 agg = pd.to_timedelta(pd.Series(time_dictionary_list[key])).min()
         
-        time_dictionary[key] = agg 
+        time_dictionary[key] = agg.round(round_to)
 
     return time_dictionary
 
