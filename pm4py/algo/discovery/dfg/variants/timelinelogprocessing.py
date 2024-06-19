@@ -1,5 +1,6 @@
 import pm4py
 import pandas as pd
+import math
 import numpy as np
 from dafsa import DAFSA
 
@@ -130,7 +131,8 @@ class TimeLine:
 def variantSequences(df):
     '''Adds sequence variants to event log (dataframe).
     '''
-    df = df.sort_values('case:concept:name', ascending=True)
+    #df = df.sort_values('time:timestamp', ascending=True)
+    #df = df.sort_values('case:concept:name', ascending=True)
     variants = pm4py.get_variants(df)
     variants = list(variants.keys())
     variantseq_dict = {}
@@ -482,9 +484,12 @@ def relativeTimestamps(df):
             df['time:timestamp'] 
             - df['case:concept:name'].map(start_times_dict)
         )
+    df = df.sort_index()
     return df
 
-def simplifyLog(df, lifecycle_activities=False, filter_cases = 0):
+def simplifyLog(df, lifecycle_activities=False, 
+                filter_cases = 0, filter_variants_k = 0, 
+                filter_variants_per = 0):
     '''simplifies a log by keeping only necessary attributes.
     '''
     #keep following columns
@@ -502,10 +507,16 @@ def simplifyLog(df, lifecycle_activities=False, filter_cases = 0):
     else:
         print('Message: No transition-activity were be created. No transition column.')
     # keep only k amount cases in the log
+    total_num_variants = len(pm4py.get_variants(df))
     if filter_cases > 0:
         case_list = df[case].unique()[0:filter_cases]
         df = pm4py.filter_event_attribute_values(df, case, case_list, level="case", retain=True).copy()
-        
+    elif filter_variants_k > 0:
+        df = pm4py.filter_variants_top_k(df, filter_variants_k).copy()
+    elif filter_variants_per > 0:
+        filter_variants_k = math.ceil(filter_variants_per*total_num_variants)
+        df = pm4py.filter_variants_top_k(df, filter_variants_k).copy()
+
     #filter log
     keep_columns = [case, activity, time]
     df = df.filter(keep_columns)

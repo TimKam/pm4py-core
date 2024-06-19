@@ -148,3 +148,10 @@ evaluation/evaluation_data/import/BPI_Challenge_2015_5.xes
 evaluation/evaluation_data/import/BPI_Challenge_2017.xes
 evaluation/evaluation_data/import/running_example.xes
 evaluation/evaluation_data/import/SEPSIS.xes
+evaluation/evaluation_data/import/next/BPI_Challenge_2015_2.xes
+evaluation/evaluation_data/import/next/BPI_Challenge_2015_3.xes
+evaluation/evaluation_data/import/next/BPI_Challenge_2015_4.xes
+evaluation/evaluation_data/import/next/BPI_Challenge_2015_5.xes
+evaluation/evaluation_data/import/next/BPI_Challenge_2017.xes
+timelineevaluationscript.py
+6_3_timeline_canbedeletedlater.ipynb

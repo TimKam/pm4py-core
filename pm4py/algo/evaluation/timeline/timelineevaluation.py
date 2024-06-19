@@ -17,7 +17,8 @@ from scipy.stats import pearsonr, spearmanr
 
 def evaluationScript(
     folder_path_import='evaluation/evaluation_data/import/', 
-    folder_path_export='evaluation/evaluation_data/export/', filter_cases = 0):
+    folder_path_export='evaluation/evaluation_data/export/', 
+    filter_cases = 0, filter_variants_k = 0, filter_variants_per = 0):
     """ Evaluates multiple logs and exports the outcome.
     """
     log_files = importMultipleEventLogs(folder_path=folder_path_import)
@@ -28,14 +29,18 @@ def evaluationScript(
         print(f'start evaluation: {eva_num}')
         print('-----------------')
         print('Event log: ', log)
+        print('- Import log')
         path_log = folder_path_import+log
-        path_statistics = folder_path_export+'stats_'+log[:-4]+'.xlsx'
+        df = pm4py.read_xes(path_log)
+        num_variants = len(pm4py.get_variants(df))
+        path_statistics = folder_path_export+'stats_'+log[:-4]+'_'+str(filter_variants_per)+'_'+str(num_variants)+'.xlsx'
         try:
-            print('- Import log')
-            df = pm4py.read_xes(path_log)
+            
             df = dft.simplifyLog(df, 
                                  lifecycle_activities = True, 
-                                 filter_cases = filter_cases)
+                                 filter_cases = filter_cases, 
+                                 filter_variants_k = filter_variants_k,
+                                 filter_variants_per = filter_variants_per)
             print('- Import succesful')
             print('- Evaluate log')
             statistics_table = timelineEvaluationScript(df)
@@ -89,12 +94,16 @@ def multipleLogPreProcessing(logname: str, df: pd.DataFrame):
     """
     df0_logname = logname + '_original'
     df0 = df.copy()
+    print('-- original log created')
     df1_logname = logname + '_dafsa'
     df1 = dft.dafsaDFG(df.copy())
+    print('-- dafsa log created')
     df2_logname = logname + '_timerule'
     df2 = dft.timeruleDFG(df.copy())
+    print('-- timerule log created')
     df3_logname = logname + '_hybrid'
     df3 = dft.timeruleDFG(df1.copy())
+    print('-- hybrid log created')
     DF_dict = {
         df0_logname: df0, df1_logname: df1, 
         df2_logname: df2, df3_logname: df3}
@@ -159,6 +168,7 @@ def multipleLogEvaluation(logname: str, DF_dict: dict):
                                   r_spearcorr_y0 = r_spearcorr_y0, 
                                   p_spearcorr_y0 = p_spearcorr_y0)
         statistics_table.update(statdict)
+        print(f'-- log {log} evaluated')
     return statistics_table
 
 def createStatDict(logname: str, **stats):
