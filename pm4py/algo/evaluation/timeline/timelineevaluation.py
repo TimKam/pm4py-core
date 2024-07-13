@@ -18,6 +18,7 @@ from scipy.stats import pearsonr, spearmanr
 def evaluationScript(
     folder_path_import='evaluation/evaluation_data/import/', 
     folder_path_export='evaluation/evaluation_data/export/', 
+    standard_DFG = False,
     filter_cases = 0, filter_variants_k = 0, filter_variants_per = 0):
     """ Evaluates multiple logs and exports the outcome.
     """
@@ -43,7 +44,7 @@ def evaluationScript(
                                  filter_variants_per = filter_variants_per)
             print('- Import succesful')
             print('- Evaluate log')
-            statistics_table = timelineEvaluationScript(df)
+            statistics_table = timelineEvaluationScript(df, standard_DFG=standard_DFG)
             print('- Evaluate succesful')
             print('- Export statistics')
             statistics_table.to_excel(path_statistics)
@@ -67,7 +68,7 @@ def importMultipleEventLogs(folder_path='evaluation/evaluation_data/import'):
             log_files.append(f)
     return log_files
 
-def timelineEvaluationScript(df: pd.DataFrame, dataframe=True):
+def timelineEvaluationScript(df: pd.DataFrame, dataframe=True, standard_DFG = False):
     """ Evaluation script for timeline-based discovery.
     Input is a log. It is discovered in different versions, then evaluated. 
     
@@ -78,7 +79,7 @@ def timelineEvaluationScript(df: pd.DataFrame, dataframe=True):
     """
     logname = 'log'
     # various preprocessing strategies of the same log
-    DF_dict = multipleLogPreProcessing(logname = logname, df = df)
+    DF_dict = multipleLogPreProcessing(logname = logname, df = df, standard_DFG = standard_DFG)
     
     # evaluation
     STAT_dict = multipleLogEvaluation(logname = logname, DF_dict = DF_dict)
@@ -89,24 +90,28 @@ def timelineEvaluationScript(df: pd.DataFrame, dataframe=True):
     return STAT_dict
 
 # Note: Add new pre-processing algorithms here.
-def multipleLogPreProcessing(logname: str, df: pd.DataFrame):
+def multipleLogPreProcessing(logname: str, df: pd.DataFrame, standard_DFG = False):
     """ Returns a dictionary of pre-processed logs.
     """
     df0_logname = logname + '_original'
     df0 = df.copy()
     print('-- original log created')
-    df1_logname = logname + '_dafsa'
-    df1 = dft.dafsaDFG(df.copy())
-    print('-- dafsa log created')
-    df2_logname = logname + '_timerule'
-    df2 = dft.timeruleDFG(df.copy())
-    print('-- timerule log created')
-    df3_logname = logname + '_hybrid'
-    df3 = dft.timeruleDFG(df1.copy())
-    print('-- hybrid log created')
-    DF_dict = {
-        df0_logname: df0, df1_logname: df1, 
-        df2_logname: df2, df3_logname: df3}
+    if standard_DFG == False:
+        df1_logname = logname + '_dafsa'
+        df1 = dft.dafsaDFG(df.copy())
+        print('-- dafsa log created')
+        df2_logname = logname + '_timerule'
+        df2 = dft.timeruleDFG(df.copy())
+        print('-- timerule log created')
+        df3_logname = logname + '_hybrid'
+        df3 = dft.timeruleDFG(df1.copy())
+        print('-- hybrid log created')
+        DF_dict = {
+            df0_logname: df0, df1_logname: df1, 
+            df2_logname: df2, df3_logname: df3}
+    else:
+        DF_dict = {
+            df0_logname: df0}
     return DF_dict
 
 def multipleLogEvaluation(logname: str, DF_dict: dict):
