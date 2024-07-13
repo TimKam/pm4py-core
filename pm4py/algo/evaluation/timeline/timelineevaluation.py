@@ -140,7 +140,6 @@ def multipleLogEvaluation(logname: str, DF_dict: dict):
         dfg_size = calculateDFGSize(DF_dict[log])
         contra_num, dfs_all_num = calculateDFGContradictions(DF_dict[log], selfloops=True)
         contra_num_noloops, dfs_all_num_noloops = calculateDFGContradictions(DF_dict[log], selfloops=False)
-        #data_s, b0_s, b1_s, r2_s, coordination_layout_s = calculateDFGLayoutCorrelations(DF_dict[log], dfg_type='standard')
         data_t, coordination_layout_t, r_pearcorr_xy, p_pearcorr_xy, r_spearcorr_xy, p_spearcorr_xy = calculateDFGLayoutCorrelations(DF_dict[log], dfg_type='timeline', distance_type='xy_euclidian')
         data_t, coordination_layout_t, r_pearcorr_y, p_pearcorr_y, r_spearcorr_y, p_spearcorr_y = calculateDFGLayoutCorrelations(DF_dict[log], dfg_type='timeline', distance_type='y_euclidian')
         data_t, coordination_layout_t, r_pearcorr_y0, p_pearcorr_y0, r_spearcorr_y0, p_spearcorr_y0 = calculateDFGLayoutCorrelations(DF_dict[log], dfg_type='timeline', distance_type='y')
@@ -199,7 +198,6 @@ def countActivities(df):
     ACTIVITY_COL = 'concept:name'
     activity_list = df[ACTIVITY_COL].unique()
     num_a = len(activity_list)
-    #print(f"no. of activities: {num_a}")
     return num_a
 
 def countSeqVariants(df):
@@ -207,7 +205,6 @@ def countSeqVariants(df):
     '''
     VARIANT_COL = 'variant:concept:name'
     num_v = len(dft.variantSequences(df)[VARIANT_COL].unique())
-    #print(f"no. of seq. variants: {num_v}")
     return num_v
 
 def countRecurrentActivities(df):
@@ -216,15 +213,12 @@ def countRecurrentActivities(df):
     ACTIVITY_COL = 'concept:name'
     CASE_COL = 'case:concept:name'
     TIME_COL = 'time:timestamp'
-    #activity_list = df[ACTIVITY_COL].unique()
 
     #new
     df_group_reccurency = df[df.groupby(
         [CASE_COL, ACTIVITY_COL])[ACTIVITY_COL].transform('count') > 1]
-    #recurr_events = len(df_group_reccurency) # number of all recurrent events
     recurr_events = len(df_group_reccurency.groupby(ACTIVITY_COL)) # number of event types with at least one recurrency in some sequence
     recurr_sequences = len(df_group_reccurency.groupby([CASE_COL])) # number of sequences with at least one recurrency
-    #number_events = len(df[ACTIVITY_COL])
     number_events = len(df[ACTIVITY_COL].unique())
     number_sequences = len(df[CASE_COL].unique())
     share_events = round(recurr_events / number_events, 3)
@@ -234,22 +228,6 @@ def countRecurrentActivities(df):
         'recurr_events': recurr_events, 'recurr_sequences': recurr_sequences, 
         'number_events': number_events, 'number_sequences': number_sequences, 
         'share_events': share_events, 'share_sequences': share_sequences}
-    
-    #print(f'share of events:{recurr_events} / {number_events} = {share_events}')
-    #print(f'share of sequences:{recurr_sequences} / {number_sequences} = {share_sequences}')
-    
-    #for activity in activity_list:
-    #    df_group = df[df[ACTIVITY_COL]==activity].groupby(CASE_COL)[TIME_COL].count() > 1
-    #    recurrent_activities += sum(df_group)
-    
-    
-    
-    # just recurrencies
-    #for activity in activity_list:
-    #    df_group = df[df[ACTIVITY_COL]==activity].groupby(CASE_COL)[TIME_COL].count()
-    #    recurrency_dict[activity] = dict(df_group.aggregate([
-    #        'min', 'max', 'mean', 'median']))
-    #return recurrency_dict
     return recurrency_dict
 
 ####METRICS
@@ -278,28 +256,18 @@ def calculateDFGContradictions(df, selfloops=True):
     selfloops = 'true' includes selfloops as contradictions (default)
     '''
     timeline_comparison = dft.createDFallnext(dft.TimeLine(df).timeDict())
-    #print(timeline_comparison)
-    #timeline_dict = clean_time.apply(df)
-    #timeline_comparison = dft.createDFallnext(timeline_dict)
     dfg, start_activities, end_activities = pm4py.discover_directly_follows_graph(df)
     dfs_all_num = len(dfg.keys())
     contra_num = 0
     for relation in dfg.keys():
-        #print(relation[0])
-        #print("->",relation[1])
-        #print(timeline_comparison[relation[0]])
         if not {relation[1]}.issubset(timeline_comparison[relation[0]]):
-            #print(True)
             # don't count selfloops if applied
             if (selfloops==False and relation[1] == relation[0]):
                 None
             else:
                 contra_num += 1
         else:
-            #print(False)
             None
-    #print("contradictions: ", contra_num)
-    #print("all dfs: ", dfs_all_num)
     return (contra_num, dfs_all_num)
 
 def calculateDFGLayoutCorrelations(
@@ -343,12 +311,10 @@ def calculateDFGLayoutCorrelations(
         print('You have to choose distance_type: xy_euclidian, x_euclidian, y_euclidian, x, or y.')
     
     # extract coordinates from gviz
-    #print(type(df['concept:name']))
     activities_list = df['concept:name'].unique()
     coordination_layout, df_layout = extractGvizCoordinates(gviz, activities_list)
     
     # calculate distances based on coordinates and timeline
-    #timeline_dict = dft.TimeLine(df).timeDict()
     timeline_dict = clean_time.apply(df) # time nodes on timeline-based approach
     coordination_layout = calculateNodeDistances(coordination_layout, timeline_dict)
     
@@ -361,25 +327,6 @@ def calculateDFGLayoutCorrelations(
     Y = np.array(data['time_difference_second'])#.reshape(-1, 1)
     r_pearcorr, p_pearcorr = pearsonr(X, Y)
     r_spearcorr, p_spearcorr = pearsonr(X, Y)
-    #print('r_corr pear:', r_pearcorr)
-    #print('r_corr spear:', r_spearcorr)
-    #print('p_value pear:', p_pearcorr)
-    #print('p_value spear:', p_spearcorr)
-    
-    # calculate a simple linear regression model (could be deleted)
-    #data = {'euclidian_distance': [], 'time_difference_second': []}
-    #for edge in coordination_layout['distances']:
-    #    data['euclidian_distance'].append(coordination_layout['distances'][edge][0])
-    #    data['time_difference_second'].append(coordination_layout['distances'][edge][1])
-    #X = np.array(data['euclidian_distance']).reshape(-1, 1)
-    #y = np.array(data['time_difference_second']).reshape(-1, 1)
-    #lr = LinearRegression().fit(X, y)
-    #b0 = lr.intercept_
-    #b1 = lr.coef_
-    #r2 = lr.score(X, y)
-    #print(f'intercept: {b0}, coefficiant: {b1[0]}, R^2: {r2}')
-    #print(data)
-    #return data, b0[0], b1[0][0], r2, coordination_layout
     return data, coordination_layout, r_pearcorr, p_pearcorr, r_spearcorr, p_spearcorr
 
 def extractGvizCoordinates(
@@ -412,7 +359,6 @@ def extractGvizCoordinates(
         row_info = img_text[i].split(' ')
         # Collect all node data
         if 'node' in row_info[0]:
-            #print(set(row_info))
             row_type = 'node'
             node_id = row_info[1]
             node_pos_x = row_info[2]
@@ -429,7 +375,6 @@ def extractGvizCoordinates(
                 coordination_layout['node_ids'][node_id] = node_activity
                 coordination_layout['node_names'][node_activity] = node_id
             else:
-                #print('node excluded:', node_activity)
                 excluded_nodes.append(node_id)
                 continue;
             
@@ -451,7 +396,6 @@ def extractGvizCoordinates(
                 coordination_layout['edges'].append(coordination_row)
             else:
                 None
-                #print('edge excluded:', (from_node, to_node))
                 continue;
                 
     complete_table = coordination_layout['nodes'] + coordination_layout['edges']
@@ -464,10 +408,10 @@ def calculateNodeDistances(coordination_layout: dict, timeline_dict: dict):
     """
     # calculate edge distances 
     edge_distance_eucl_dict = {}
-    edge_distance_eucl_x_dict = {} # NEW
-    edge_distance_eucl_y_dict = {} # NEW
-    edge_distance_x_dict = {} # NEW
-    edge_distance_y_dict = {} # NEW
+    edge_distance_eucl_x_dict = {}
+    edge_distance_eucl_y_dict = {}
+    edge_distance_x_dict = {}
+    edge_distance_y_dict = {}
     edge_distance_time_dict = {}
     edge_distances = {}
     for edge in coordination_layout['edges']:

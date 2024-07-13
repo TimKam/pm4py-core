@@ -20,29 +20,24 @@ def timeruleDFG(df, time_calculation='mean'):
     df = relativeTimestamps(df)
 
     # 1) Divide log in sequence variants
-    #print('1) Log divided')
     df = variantSequences(df)
     variants = df['variant:concept:name'].unique()
     
     # 2) Create/ Update (updates below) timeline a timeline
-    #print('2) Create timelines')
     time_0 = TimeLine(df, time_calculation=time_calculation) 
-    timedict_0 = time_0.timeDict() # could be implemented in the class
-    time_DF_0 = createDFall(timedict_0) # could be implemented in the class
+    timedict_0 = time_0.timeDict() # TODO could be implemented in the class
+    time_DF_0 = createDFall(timedict_0) # TODO could be implemented in the class
     activity_versions = time_0.activityVersions(timedict_0)
 
     
     # 3) Check each variant 
     for v in variants:
-        #print('\n====check variant: ', v)
-        # 3.a) Create a variant timeline.  
         df_variant = df[df['variant:concept:name']==v]
         time_1 = TimeLine(df_variant, time_calculation=time_calculation)
         timedict_1 = time_1.timeDict()
         time_DF_1 = createDFnext(timedict_1)
         
         # 3.b) Compare base-timeline with variant-timeline for 
-        #print('-> timelineComparison()')
         activity_changes = timelineComparison(timedict_0, time_DF_0, timedict_1, time_DF_1, activity_versions)
 
         # Rename activities that do not adhere to timeline
@@ -54,15 +49,12 @@ def timeruleDFG(df, time_calculation='mean'):
                 indices = df['concept:name'].loc[
                     (df['variant:concept:name']==v) & (df['concept:name']==old_activity)].index.to_list()
                 df.loc[indices, 'concept:name'] = new_activity
-                # old code
-                #df['concept:name'].loc[df['variant:concept:name']==v] = df['concept:name'].loc[df['variant:concept:name']==v].replace(old_activity, new_activity)
                 
         # (2) Update timeline
         time_0 = TimeLine(df, time_calculation=time_calculation) 
         timedict_0 = time_0.timeDict()
         time_DF_0 = createDFall(timedict_0)
         activity_versions = time_0.activityVersions(timedict_0)
-        #print('activity_versions', activity_versions)
     return df
 
 class TimeLine:
@@ -131,8 +123,6 @@ class TimeLine:
 def variantSequences(df):
     '''Adds sequence variants to event log (dataframe).
     '''
-    #df = df.sort_values('time:timestamp', ascending=True)
-    #df = df.sort_values('case:concept:name', ascending=True)
     variants = pm4py.get_variants(df)
     variants = list(variants.keys())
     variantseq_dict = {}
@@ -148,7 +138,7 @@ def variantSequences(df):
 
 def createDFall(timedict: dict):
     '''Returns a dictionary with all activites that follow one activity in a sequence.
-    Warning! Dictionary must be sorter according to time/occurency.
+    Warning! Dictionary must be sorted according to time/occurency.
     '''
     sequence = list(timedict.keys())
     DF_dict = {}
@@ -166,13 +156,6 @@ def timelineComparison2(timedict_0, time_DF_0, timedict_1, time_DF_1, activity_v
     '''
     activity_changes = []
     a_change_check = ('', '')
-    #print('======')
-    #print('timedict_0', timedict_0)
-    #print('\ntimedict_1', timedict_1)
-    #print('\ntime_DF_0', time_DF_0)
-    #print('\ntime_DF_1', time_DF_1)
-    #print('\nactivity_versions', activity_versions)
-    #print('======\n')
     # Check each relation a and b, where a < b in timeline 1.
     for activity_a in time_DF_1:
         activity_b = next(iter(time_DF_1[activity_a]))
@@ -183,9 +166,6 @@ def timelineComparison2(timedict_0, time_DF_0, timedict_1, time_DF_1, activity_v
         activity_b_original = activity_b.split(sep, 1)[0]
         activity_a_dummy = ''
         activity_b_dummy = ''
-        #print('activity_a', activity_a)
-        #print('activity_b', activity_b)
-        
             
         # CHECK 1) a < b => A < B | a=A, b=B, a≠a', a≠a*
         if (({activity_b}.issubset(time_DF_0[activity_a]) and 
@@ -254,14 +234,11 @@ def timelineComparison2(timedict_0, time_DF_0, timedict_1, time_DF_1, activity_v
           
         # FINALIZE: change activities
         if activity_a_dummy != '':
-            #print('=> activity_a_dummy', activity_a_dummy)
             activity_changes.append((activity_a, activity_a_dummy))
             activity_a_dummy = ''
         if activity_b_dummy != '':
-            #print('=> activity_b_dummy', activity_b_dummy)
             activity_changes.append((activity_b, activity_b_dummy))
             activity_b_dummy = ''
-        #print('=> activity_changes', activity_changes)
             
     return activity_changes
 
@@ -270,7 +247,6 @@ def timelineCompariso3(timedict_0, time_DF_0, timedict_1, time_DF_1, activity_ve
     '''
     activity_changes = []
     timediff = {'start'}
-    #print(timedict_0)
     for activity in time_DF_1:
         next_activity = next(iter(time_DF_1[activity]))
           
@@ -344,7 +320,7 @@ def timelineComparison(timedict_0, time_DF_0, timedict_1, time_DF_1, activity_ve
         previous_activity = activity
     return activity_changes
 
-# ToDo delete and use createDFallnext() instead?
+# TODO delete and use createDFallnext() instead?
 def createDFnext(timedict: dict):
     '''Returns a dictionary with the activity that follows one activity in a sequence.
     Warning! Dictionary must be sorter according to time/occurency.
@@ -409,11 +385,8 @@ def dafsaDFG(df):
     # attach node number to index in dataframe
     index_seq_dict = {}
     for case in df['case:concept:name']:
-        #print(f"case:{case}")
         seq_number=0
         for index in df.loc[df['case:concept:name']==case].index:
-            #print(index)
-            #print(a_new_seq_dict[case][seq_number])
             index_seq_dict[index] = a_new_seq_dict[case][seq_number]
             seq_number+=1
     # add to dataframe
