@@ -20,7 +20,16 @@ def evaluationScript(
     folder_path_export='evaluation/evaluation_data/export/', 
     standard_DFG = False,
     filter_cases = 0, filter_variants_k = 0, filter_variants_per = 0):
-    """ Evaluates multiple logs and exports the outcome.
+    """ Evaluates multiple logs (only XES) from a folder and exports the outcome.
+    =====
+    Parameters:
+    =====
+    folder_path_import: event data input directory
+    folder_path_export: export folder directory
+    standard_DFG: evaluate a standard DFG, no timeline
+    filter_cases: choose amount of cases to evaluate
+    filter_variants_k: choose k top variants in the log to evaluate
+    filter_variants_per: choose per (percentage) of the top variants in the log to evaluate
     """
     log_files = importMultipleEventLogs(folder_path=folder_path_import)
     print('== Evaluation starts ==')
