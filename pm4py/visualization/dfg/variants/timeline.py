@@ -95,7 +95,7 @@ def get_activities_color(activities_count):
 
 def graphviz_visualization(activities_count, dfg, dfg_time : Dict, image_format="png", measure="timeline",
                            max_no_of_edges_in_diagram=100000, start_activities=None, end_activities=None, soj_time=None,
-                            font_size="12", bgcolor=constants.DEFAULT_BGCOLOR, stat_locale=None):
+                            font_size="12", bgcolor=constants.DEFAULT_BGCOLOR, stat_locale=None, minlen_mechanism=None):
     if start_activities is None:
         start_activities = {}
     if end_activities is None:
@@ -175,7 +175,6 @@ def graphviz_visualization(activities_count, dfg, dfg_time : Dict, image_format=
 
     ''' calculate how long each edge should be to make the edges proportional along the timeilne axis.'''
     minlen_list = []
-
     minlen_aux =[]
     [minlen_aux.append(item) for item in timestamps_to_include if item not in minlen_aux]
 
@@ -183,10 +182,10 @@ def graphviz_visualization(activities_count, dfg, dfg_time : Dict, image_format=
         int1 = int(re.search(r'\d+', minlen_aux[i]).group())
         int2 = int(re.search(r'\d+', minlen_aux[i+1]).group())
         minlen = int2 - int1
-        if(minlen<1):
+        # if minlen_mechanism=="equal", then timeline scale is set to a strict one-step ranking
+        if minlen_mechanism=="equal":
             minlen = 1
         minlen_list.append(minlen)
-
 
     #create edges for the timeline
     edges_in_timeline = []
@@ -275,7 +274,7 @@ def graphviz_visualization(activities_count, dfg, dfg_time : Dict, image_format=
     return viz
 
 
-def apply(dfg: Dict[Tuple[str, str], int], dfg_time : Dict, log: EventLog = None, parameters: Optional[Dict[Any, Any]] = None, activities_count : Dict[str, int] = None, soj_time: Dict[str, float] = None) -> Digraph: 
+def apply(dfg: Dict[Tuple[str, str], int], dfg_time : Dict, log: EventLog = None, parameters: Optional[Dict[Any, Any]] = None, activities_count : Dict[str, int] = None, soj_time: Dict[str, float] = None, minlen_mechanism=None) -> Digraph: 
 
     if parameters is None:
         parameters = {}
@@ -305,4 +304,4 @@ def apply(dfg: Dict[Tuple[str, str], int], dfg_time : Dict, log: EventLog = None
     return graphviz_visualization(activities_count, dfg, dfg_time, image_format=image_format, measure="frequency",
                                   max_no_of_edges_in_diagram=max_no_of_edges_in_diagram,
                                   start_activities=start_activities, end_activities=end_activities, 
-                                  font_size=font_size, bgcolor=bgcolor, stat_locale=stat_locale)
+                                  font_size=font_size, bgcolor=bgcolor, stat_locale=stat_locale,minlen_mechanism=minlen_mechanism)
