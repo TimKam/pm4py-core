@@ -178,3 +178,8 @@ evaluation/evaluation_data/import/next/BPI_Challenge_2015_1.xes
 evaluation/evaluation_data/import/next/BPI_Challenge_2015_3_89.xes
 evaluation/evaluation_data/import/next/BPI_Challenge_2015_4_89.xes
 evaluation/evaluation_data/import/next/BPI_Challenge_2015_5_89.xes
+evaluation/evaluation_data/export/stats_BPI_Challenge_2013_incidents_1e-05_1511.xlsx
+evaluation/evaluation_data/export/stats_BPI_Challenge_2015_2_89_1e-05_823.xlsx
+.gitignore
+evaluation/evaluation_data/export/stats_running_example_1e-05_6.xlsx
+evaluation/evaluation_data/export/stats_SEPSIS_1e-05_846.xlsx
