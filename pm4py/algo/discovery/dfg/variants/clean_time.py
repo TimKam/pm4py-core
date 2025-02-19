@@ -23,7 +23,7 @@ from pandas.core.tools.datetimes import to_datetime
 from pm4py.objects.dfg.obj import DFG
 from pm4py.util import constants, exec_utils
 from pm4py.util import xes_constants as xes_util
-
+from sympy import divisors
 
 class Parameters(Enum):
     ACTIVITY_KEY = constants.PARAMETER_CONSTANT_ACTIVITY_KEY
@@ -39,7 +39,9 @@ CONST_COUNT = 'count_'
 from pm4py.discovery import discover_dfg_typed
 
 
-def apply(log: pd.DataFrame, parameters=None):
+def apply(log: pd.DataFrame, parameters=None, 
+          reduction_to_abs=None, reduction_to_perc=None
+          ):
     if parameters is None:
         parameters = {}
 
@@ -66,7 +68,6 @@ def apply(log: pd.DataFrame, parameters=None):
     for case in all_cases:
         current_group = grouped.get_group(case)
         current_group = current_group.sort_values([cid_key, time_key]).loc[:, [cid_key, act_key, time_key]].reset_index()
-       
         all_act = current_group[act_key].unique()
         init_timestamp = current_group[time_key][0]
         '''deal with loops in a case'''
@@ -87,7 +88,6 @@ def apply(log: pd.DataFrame, parameters=None):
                 time_dictionary_list[act].append(rel_time)
             else:
                 time_dictionary_list[act].append(rel_time)
-            
 
     keys = time_dictionary_list.keys()
     time_dictionary = {}
@@ -103,6 +103,80 @@ def apply(log: pd.DataFrame, parameters=None):
                 agg = pd.to_timedelta(pd.Series(time_dictionary_list[key])).min()
         
         time_dictionary[key] = agg.round(round_to)
+    
+    # reduce the number of nodes in the timeline
+    try:
+        if reduction_to_abs is not None:
+            if reduction_to_perc is not None:
+                print("Message: 'reduction_to_abs' overrides 'reduction_to_perc'.")
+            time_dictionary = reduce_number_of_nodes_in_timeline(time_dictionary, reduction_to_abs=reduction_to_abs).copy()
+        elif reduction_to_perc is not None: 
+            time_dictionary = reduce_number_of_nodes_in_timeline(time_dictionary, reduction_to_perc=reduction_to_perc).copy()
+    except Exception as e:
+        print(e)
 
     return time_dictionary
 
+def find_closest_natural_divisor_to_target_number(
+        start_number:int, target_number=None, target_percentage=None) -> int:
+    """
+    Finds the divisor in a list of divisors of natural numbers 
+    that is closest to a target number (absolute or percentage).
+    
+    Args:
+        start_number (int): start number
+        target_number (int): target number (absolute)
+        target_percentage (float): target number (percentage)
+    
+    Returns:
+        closest_divisor (integer): result of the closest divisor
+    """
+    divisor_list = divisors(start_number)
+    if target_percentage:
+        if target_percentage >= 0 and target_percentage <= 1:
+            target_number = start_number*target_percentage
+    closest_divisor = min(divisor_list, key=lambda divisor: abs(divisor - target_number))
+    return closest_divisor
+
+def replace_subsequent_sorted_values_in_dictionary(dictionary:dict, next_values:int) -> dict:
+    """
+    Replaces the values of a dictionary with the same value 
+    for the next 'next_values' values starting with the highest.
+    
+    Args:
+        dictionary (dict): Dictionary to be updated
+        next_values (int): Number of values
+    Returns:
+        dictionary_update (dict): The updated dictionary
+    """
+    dictionary_update = dict(sorted(dictionary.items(), key=lambda item: item[1], reverse=True)).copy()
+    tracker = 0
+    value_replacement = 0
+    for key in dictionary_update.keys():
+        if tracker == 0:
+            tracker = next_values + 0
+            value_replacement = dictionary_update[key]
+        dictionary_update[key] = value_replacement
+        tracker -= 1
+    return dictionary_update
+
+def reduce_number_of_nodes_in_timeline(dictionary:dict, reduction_to_abs=None, 
+                                       reduction_to_perc=None) -> dict:
+    """
+    Reduces the number of nodes in the timeline dictionary with time folding 
+    by replacing subsequent values starting from the highest.
+    
+    Args:
+        dictionary (dict): Timeline dictionary (must be sorted)
+        reduction_to_abs (int): Reduction to an absolute number of nodes
+        reduction_to_perc (float): Reduction to a percentage of the number of total nodes
+    
+    Returns:
+        dfg_time_update (dict): Updated timeline dictionary
+    """
+    timenodes = len(dictionary)
+    num_nodes = find_closest_natural_divisor_to_target_number(
+        timenodes, target_number=reduction_to_abs, target_percentage=reduction_to_perc)
+    time_replacement_num = int(timenodes/num_nodes)
+    dfg_time_update = replace_subsequent_sorted_values_in_dictionary(dictionary, time_replacement_num)
+    return dfg_time_update
