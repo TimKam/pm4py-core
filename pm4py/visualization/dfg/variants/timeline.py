@@ -185,6 +185,8 @@ def graphviz_visualization(activities_count, dfg, dfg_time : Dict, image_format=
         # if minlen_mechanism=="equal", then timeline scale is set to a strict one-step ranking
         if minlen_mechanism=="equal":
             minlen = 1
+        elif(minlen<1):
+            minlen = 1
         minlen_list.append(minlen)
 
     #create edges for the timeline
